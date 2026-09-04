@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
   BookOpen,
   CheckCircle2,
@@ -25,7 +26,7 @@ function MyLearning({ user, onOpenCourse }) {
         setError("");
 
         const response = await fetch(
-          `http://127.0.0.1:8000/my-learning?user_id=${user.user_id}`
+          `/api/my-learning?user_id=${user.user_id}`
         );
 
         if (!response.ok) {
@@ -41,11 +42,14 @@ function MyLearning({ user, onOpenCourse }) {
           safeData.map(async (course) => {
             try {
               const progressResponse = await fetch(
-                `http://127.0.0.1:8000/courses/${course.id}/progress?user_id=${user.user_id}`
+                `/api/courses/${course.id}/progress?user_id=${user.user_id}`
               );
 
               if (!progressResponse.ok) {
-                return [course.id, Number(course.progress || 0)];
+                return [
+                  course.id,
+                  Number(course.progress || 0),
+                ];
               }
 
               const progressData = await progressResponse.json();
@@ -59,14 +63,17 @@ function MyLearning({ user, onOpenCourse }) {
                 ),
               ];
             } catch {
-              return [course.id, Number(course.progress || 0)];
+              return [
+                course.id,
+                Number(course.progress || 0),
+              ];
             }
           })
         );
 
         setProgressMap(Object.fromEntries(progressEntries));
       } catch (err) {
-        console.error(err);
+        console.error("My Learning error:", err);
         setError("Unable to load your learning dashboard.");
       } finally {
         setLoading(false);
@@ -107,11 +114,28 @@ function MyLearning({ user, onOpenCourse }) {
     courses.length > 0
       ? Math.round(
         courses.reduce(
-          (sum, course) => sum + course.progress,
+          (sum, course) =>
+            sum + Number(course.progress || 0),
           0
         ) / courses.length
       )
       : 0;
+
+  const handleOpenCourse = (courseId) => {
+    if (!courseId) {
+      console.error("Course ID is missing");
+      return;
+    }
+
+    if (typeof onOpenCourse !== "function") {
+      console.error(
+        "onOpenCourse handler was not provided."
+      );
+      return;
+    }
+
+    onOpenCourse(Number(courseId));
+  };
 
   if (loading) {
     return (
@@ -137,6 +161,7 @@ function MyLearning({ user, onOpenCourse }) {
         </div>
 
         <h2>Something went wrong</h2>
+
         <p>{error}</p>
 
         <button
@@ -152,7 +177,9 @@ function MyLearning({ user, onOpenCourse }) {
   return (
     <div className="my-learning-page">
 
-      {/* HERO */}
+      {/* =====================================================
+          HERO
+      ===================================================== */}
 
       <section className="learning-hero">
 
@@ -169,30 +196,29 @@ function MyLearning({ user, onOpenCourse }) {
           </h1>
 
           <p>
-            Pick up where you left off and turn every completed
-            learning activity into stronger capability.
+            Pick up where you left off and turn every
+            completed learning activity into stronger
+            capability.
           </p>
 
         </div>
-
 
         <div className="learning-progress-orb">
 
           <div className="learning-orb-ring"></div>
 
           <div className="learning-progress-center">
-
             <strong>{overallProgress}%</strong>
             <span>overall</span>
-
           </div>
 
         </div>
 
       </section>
 
-
-      {/* SUMMARY */}
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
 
       <section className="learning-summary">
 
@@ -222,8 +248,9 @@ function MyLearning({ user, onOpenCourse }) {
 
       </section>
 
-
-      {/* ACTIVE */}
+      {/* =====================================================
+          ACTIVE COURSES
+      ===================================================== */}
 
       <section className="learning-section">
 
@@ -231,7 +258,9 @@ function MyLearning({ user, onOpenCourse }) {
 
           <div>
             <span>CONTINUE YOUR JOURNEY</span>
+
             <h2>In progress</h2>
+
             <p>
               Learning programs that are currently underway.
             </p>
@@ -242,7 +271,6 @@ function MyLearning({ user, onOpenCourse }) {
           </div>
 
         </div>
-
 
         {active.length === 0 ? (
 
@@ -257,8 +285,8 @@ function MyLearning({ user, onOpenCourse }) {
             </h3>
 
             <p>
-              Explore courses and start your next capability-building
-              journey.
+              Explore courses and start your next
+              capability-building journey.
             </p>
 
           </div>
@@ -272,6 +300,7 @@ function MyLearning({ user, onOpenCourse }) {
                 key={course.id}
                 course={course}
                 index={index}
+                onOpenCourse={handleOpenCourse}
               />
             ))}
 
@@ -281,8 +310,9 @@ function MyLearning({ user, onOpenCourse }) {
 
       </section>
 
-
-      {/* COMPLETED */}
+      {/* =====================================================
+          COMPLETED COURSES
+      ===================================================== */}
 
       <section className="learning-section completed-section">
 
@@ -290,7 +320,9 @@ function MyLearning({ user, onOpenCourse }) {
 
           <div>
             <span>MILESTONES</span>
+
             <h2>Completed programs</h2>
+
             <p>
               Courses you've successfully finished.
             </p>
@@ -303,7 +335,6 @@ function MyLearning({ user, onOpenCourse }) {
 
         </div>
 
-
         {completed.length === 0 ? (
 
           <div className="learning-empty compact">
@@ -312,11 +343,13 @@ function MyLearning({ user, onOpenCourse }) {
               <CheckCircle2 size={24} />
             </div>
 
-            <h3>No completed programs yet</h3>
+            <h3>
+              No completed programs yet
+            </h3>
 
             <p>
-              Complete your first course to start building your
-              achievement history.
+              Complete your first course to start
+              building your achievement history.
             </p>
 
           </div>
@@ -326,6 +359,7 @@ function MyLearning({ user, onOpenCourse }) {
           <div className="completed-list">
 
             {completed.map((course, index) => (
+
               <div
                 className="completed-course"
                 key={course.id}
@@ -339,12 +373,16 @@ function MyLearning({ user, onOpenCourse }) {
                 </div>
 
                 <div className="completed-course-info">
-                  <strong>{course.title}</strong>
+
+                  <strong>
+                    {course.title}
+                  </strong>
 
                   <span>
                     {course.category ||
                       "Capability Development"}
                   </span>
+
                 </div>
 
                 <div className="completed-course-status">
@@ -354,12 +392,15 @@ function MyLearning({ user, onOpenCourse }) {
                 <button
                   className="completed-arrow"
                   title="View course"
-                  onClick={() => onOpenCourse(course.id)}
+                  onClick={() =>
+                    handleOpenCourse(course.id)
+                  }
                 >
                   <ArrowRight size={15} />
                 </button>
 
               </div>
+
             ))}
 
           </div>
@@ -406,9 +447,13 @@ function SummaryCard({
 function LearningCard({
   course,
   index,
+  onOpenCourse,
 }) {
   const progress = Math.min(
-    Math.max(Number(course.progress || 0), 0),
+    Math.max(
+      Number(course.progress || 0),
+      0
+    ),
     100
   );
 
@@ -472,24 +517,36 @@ function LearningCard({
         <div className="learning-bar">
 
           <div className="learning-bar-top">
-            <span>Your progress</span>
-            <strong>{progress}%</strong>
+
+            <span>
+              Your progress
+            </span>
+
+            <strong>
+              {progress}%
+            </strong>
+
           </div>
 
           <div className="learning-bar-track">
+
             <div
               style={{
                 width: `${progress}%`,
               }}
             ></div>
+
           </div>
 
         </div>
 
 
         <button
+          type="button"
           className="continue-learning-button"
-          onClick={() => onOpenCourse(course.id)}
+          onClick={() =>
+            onOpenCourse(course.id)
+          }
         >
           Continue learning
           <ArrowRight size={14} />

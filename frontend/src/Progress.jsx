@@ -22,10 +22,10 @@ function Progress({ user }) {
         const [learningResponse, competencyResponse] =
           await Promise.all([
             fetch(
-              `http://127.0.0.1:8000/my-learning?user_id=${user.user_id}`
+              `/api/my-learning?user_id=${user.user_id}`
             ),
             fetch(
-              `http://127.0.0.1:8000/competencies/${user.user_id}`
+              `/api/competencies/${user.user_id}`
             ),
           ]);
 

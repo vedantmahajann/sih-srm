@@ -19,7 +19,7 @@ function LearningPath({ user, onOpenCourse }) {
         const loadPath = async () => {
             try {
                 const response = await fetch(
-                    `http://127.0.0.1:8000/recommendations/${user.user_id}`
+                    `/api/recommendations/${user.user_id}`
                 );
 
                 const data = await response.json();

@@ -1403,3 +1403,366 @@ def admin_users(db: Session = Depends(get_db)):
         }
         for user in users
     ]
+@app.post("/courses/seed-real")
+def seed_real_courses(db: Session = Depends(get_db)):
+
+    real_courses = [
+        {
+            "title": "Intro to SQL",
+            "description": "Learn SQL for working with databases using Google BigQuery. Covers SELECT, filtering, grouping, ordering, common table expressions and joins.",
+            "category": "Data Analysis",
+            "difficulty": "Beginner",
+            "duration": "3 hours"
+        },
+        {
+            "title": "Get started with Microsoft data analytics",
+            "description": "Explore the role of a data analyst and learn how Power BI transforms data into useful reports and dashboards for data-driven decisions.",
+            "category": "Data Analysis",
+            "difficulty": "Intermediate",
+            "duration": "1h 28m"
+        },
+        {
+            "title": "Prepare and visualize data with Power BI",
+            "description": "Learn how to connect to data, transform and shape it, and create interactive visuals and reports in Power BI.",
+            "category": "Data Analysis",
+            "difficulty": "Beginner",
+            "duration": "8h 12m"
+        },
+        {
+            "title": "Effective communication in the workplace",
+            "description": "Develop practical workplace communication skills including listening, questioning, written communication, difficult conversations and personal development planning.",
+            "category": "Communication",
+            "difficulty": "Beginner",
+            "duration": "24 hours"
+        },
+        {
+            "title": "Leadership and followership",
+            "description": "Explore leadership styles, leadership challenges, followership and practical ways to develop leadership capability.",
+            "category": "Leadership",
+            "difficulty": "Beginner",
+            "duration": "24 hours"
+        },
+        {
+            "title": "Introduction to cyber security: stay safe online",
+            "description": "Build foundational cybersecurity awareness and learn how to recognise online threats and protect your digital information.",
+            "category": "Digital Skills",
+            "difficulty": "Beginner",
+            "duration": "24 hours"
+        },
+    ]
+
+    added = 0
+
+    for course_data in real_courses:
+
+        existing = db.query(Course).filter(
+            Course.title == course_data["title"]
+        ).first()
+
+        if not existing:
+            course = Course(
+                title=course_data["title"],
+                description=course_data["description"],
+                category=course_data["category"],
+                difficulty=course_data["difficulty"],
+                duration=course_data["duration"]
+            )
+
+            db.add(course)
+            added += 1
+
+    db.commit()
+
+    return {
+        "message": "Real course catalog added successfully",
+        "courses_added": added
+    }
+@app.post("/modules/seed-real")
+def seed_real_course_modules(db: Session = Depends(get_db)):
+
+    course_modules = {
+        "Intro to SQL": [
+            {
+                "title": "SQL basics and SELECT",
+                "description": "Understand tables, columns and how to retrieve data using SELECT statements.",
+                "duration": "30 min",
+                "order": 1
+            },
+            {
+                "title": "Filtering and sorting data",
+                "description": "Work with WHERE, ORDER BY and basic filtering techniques.",
+                "duration": "30 min",
+                "order": 2
+            },
+            {
+                "title": "Grouping and aggregation",
+                "description": "Use GROUP BY and aggregate functions to summarize datasets.",
+                "duration": "35 min",
+                "order": 3
+            },
+            {
+                "title": "Common table expressions",
+                "description": "Learn how CTEs help structure more readable and reusable SQL queries.",
+                "duration": "30 min",
+                "order": 4
+            },
+            {
+                "title": "Working with joins",
+                "description": "Understand how to combine information from multiple related tables.",
+                "duration": "40 min",
+                "order": 5
+            }
+        ],
+
+        "Get started with Microsoft data analytics": [
+            {
+                "title": "The role of a data analyst",
+                "description": "Understand how analysts turn organizational data into useful insights.",
+                "duration": "20 min",
+                "order": 1
+            },
+            {
+                "title": "The data analytics workflow",
+                "description": "Explore the stages involved in preparing, analysing and communicating data.",
+                "duration": "20 min",
+                "order": 2
+            },
+            {
+                "title": "Introduction to Power BI",
+                "description": "Understand how Power BI supports interactive reporting and business intelligence.",
+                "duration": "20 min",
+                "order": 3
+            },
+            {
+                "title": "Building useful reports",
+                "description": "Learn the principles behind clear and decision-focused data reports.",
+                "duration": "20 min",
+                "order": 4
+            }
+        ],
+
+        "Prepare and visualize data with Power BI": [
+            {
+                "title": "Connect to data",
+                "description": "Explore common data sources and understand how Power BI connects to them.",
+                "duration": "1 hour",
+                "order": 1
+            },
+            {
+                "title": "Clean and transform data",
+                "description": "Prepare raw data for analysis using transformation and data-shaping techniques.",
+                "duration": "1h 30m",
+                "order": 2
+            },
+            {
+                "title": "Create data models",
+                "description": "Understand relationships and build models that support reliable analysis.",
+                "duration": "1h 30m",
+                "order": 3
+            },
+            {
+                "title": "Build visualizations",
+                "description": "Create meaningful charts and visual reports from prepared data.",
+                "duration": "1h 30m",
+                "order": 4
+            },
+            {
+                "title": "Design interactive reports",
+                "description": "Combine visuals and report features into useful interactive dashboards.",
+                "duration": "1h 30m",
+                "order": 5
+            }
+        ],
+
+        "Effective communication in the workplace": [
+            {
+                "title": "Communication fundamentals",
+                "description": "Understand the role of clear communication in professional environments.",
+                "duration": "2 hours",
+                "order": 1
+            },
+            {
+                "title": "Active listening",
+                "description": "Develop listening habits that improve understanding and collaboration.",
+                "duration": "2 hours",
+                "order": 2
+            },
+            {
+                "title": "Effective workplace conversations",
+                "description": "Explore techniques for constructive and productive professional conversations.",
+                "duration": "2 hours",
+                "order": 3
+            },
+            {
+                "title": "Written communication",
+                "description": "Improve clarity and structure in professional written communication.",
+                "duration": "2 hours",
+                "order": 4
+            }
+        ],
+
+        "Leadership and followership": [
+            {
+                "title": "Understanding leadership",
+                "description": "Explore what leadership means and how leadership capability develops.",
+                "duration": "2 hours",
+                "order": 1
+            },
+            {
+                "title": "Leadership styles",
+                "description": "Compare different leadership approaches and when they may be effective.",
+                "duration": "2 hours",
+                "order": 2
+            },
+            {
+                "title": "The role of followers",
+                "description": "Understand followership and its relationship with effective teams.",
+                "duration": "2 hours",
+                "order": 3
+            },
+            {
+                "title": "Developing leadership capability",
+                "description": "Create practical development goals for continued leadership growth.",
+                "duration": "2 hours",
+                "order": 4
+            }
+        ],
+
+        "Introduction to cyber security: stay safe online": [
+            {
+                "title": "Cybersecurity fundamentals",
+                "description": "Understand common cybersecurity concepts and why digital security matters.",
+                "duration": "2 hours",
+                "order": 1
+            },
+            {
+                "title": "Recognising online threats",
+                "description": "Learn how to identify common digital threats and suspicious activity.",
+                "duration": "2 hours",
+                "order": 2
+            },
+            {
+                "title": "Protecting accounts and information",
+                "description": "Explore practical approaches to protecting personal and organisational information.",
+                "duration": "2 hours",
+                "order": 3
+            },
+            {
+                "title": "Safe digital behaviour",
+                "description": "Build everyday cybersecurity habits for professional and personal environments.",
+                "duration": "2 hours",
+                "order": 4
+            }
+        ]
+    }
+
+    added = 0
+
+    for course_title, modules in course_modules.items():
+
+        course = db.query(Course).filter(
+            Course.title == course_title
+        ).first()
+
+        if not course:
+            continue
+
+        existing_modules = db.query(Module).filter(
+            Module.course_id == course.id
+        ).count()
+
+        if existing_modules > 0:
+            continue
+
+        for module_data in modules:
+
+            module = Module(
+                course_id=course.id,
+                title=module_data["title"],
+                description=module_data["description"],
+                duration=module_data["duration"],
+                order=module_data["order"]
+            )
+
+            db.add(module)
+            added += 1
+
+    db.commit()
+
+    return {
+        "message": "Real-course learning structure added successfully",
+        "modules_added": added
+    }
+@app.post("/modules/reset-sql")
+def reset_sql_modules(db: Session = Depends(get_db)):
+
+    course = db.query(Course).filter(
+        Course.title == "Intro to SQL"
+    ).first()
+
+    if not course:
+        return {
+            "message": "Intro to SQL course not found"
+        }
+
+    # Remove the old SQL module structure
+    db.query(Module).filter(
+        Module.course_id == course.id
+    ).delete(synchronize_session=False)
+
+    sql_modules = [
+        {
+            "title": "Getting Started with SQL",
+            "description": "Understand relational databases, tables, rows, columns and the workflow used to answer questions with SQL.",
+            "duration": "30 min",
+            "order": 1
+        },
+        {
+            "title": "SELECT, FROM & WHERE",
+            "description": "Learn how to retrieve specific columns and filter records using practical SQL queries.",
+            "duration": "35 min",
+            "order": 2
+        },
+        {
+            "title": "GROUP BY, HAVING & COUNT",
+            "description": "Learn how to summarise data using aggregation, grouping and business-focused analysis.",
+            "duration": "35 min",
+            "order": 3
+        },
+        {
+            "title": "ORDER BY",
+            "description": "Learn how to sort query results and prioritise the information most relevant to a business question.",
+            "duration": "20 min",
+            "order": 4
+        },
+        {
+            "title": "AS & WITH",
+            "description": "Use aliases and common table expressions to make SQL queries clearer and easier to manage.",
+            "duration": "30 min",
+            "order": 5
+        },
+        {
+            "title": "Joining Data",
+            "description": "Learn how related tables are combined using JOIN operations and why joins are essential in real databases.",
+            "duration": "30 min",
+            "order": 6
+        }
+    ]
+
+    for item in sql_modules:
+        db.add(
+            Module(
+                course_id=course.id,
+                title=item["title"],
+                description=item["description"],
+                duration=item["duration"],
+                order=item["order"]
+            )
+        )
+
+    db.commit()
+
+    return {
+        "message": "SQL course structure updated successfully",
+        "modules_added": len(sql_modules)
+    }

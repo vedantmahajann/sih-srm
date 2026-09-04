@@ -21,8 +21,8 @@ function Admin() {
     const loadAdminData = async () => {
       try {
         const [statsResponse, usersResponse] = await Promise.all([
-          fetch("http://127.0.0.1:8000/admin/stats"),
-          fetch("http://127.0.0.1:8000/admin/users"),
+          fetch("/api/admin/stats"),
+          fetch("/api/admin/users"),
         ]);
 
         const statsData = await statsResponse.json();

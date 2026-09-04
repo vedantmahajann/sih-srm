@@ -21,7 +21,7 @@ function Quiz({ course, user, onComplete }) {
     const loadQuiz = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/courses/${course.id}/quiz`
+          `/api/courses/${course.id}/quiz`
         );
 
         const data = await response.json();
@@ -58,7 +58,7 @@ function Quiz({ course, user, onComplete }) {
       setSubmitting(true);
 
       const response = await fetch(
-        `http://127.0.0.1:8000/courses/${course.id}/quiz/submit?user_id=${user.user_id}`,
+        `/api/courses/${course.id}/quiz/submit?user_id=${user.user_id}`,
         {
           method: "POST",
           headers: {

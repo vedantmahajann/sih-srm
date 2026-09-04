@@ -7,6 +7,7 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
   Library,
@@ -16,6 +17,8 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  UserCheck,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -39,29 +42,47 @@ function App() {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem("capacity_connect_user");
-      return savedUser ? JSON.parse(savedUser) : null;
+
+      if (savedUser) {
+        return JSON.parse(savedUser);
+      }
+
+      return null;
     } catch (error) {
-      console.error("Failed to restore session:", error);
+      console.error("Failed to restore user session:", error);
       return null;
     }
   });
 
   const handleLogin = (userData) => {
-    localStorage.setItem(
-      "capacity_connect_user",
-      JSON.stringify(userData)
-    );
-
     setUser(userData);
+
+    try {
+      localStorage.setItem(
+        "capacity_connect_user",
+        JSON.stringify(userData)
+      );
+    } catch (error) {
+      console.error("Failed to save user session:", error);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("capacity_connect_user");
     setUser(null);
+
+    try {
+      localStorage.removeItem("capacity_connect_user");
+    } catch (error) {
+      console.error("Failed to clear user session:", error);
+    }
   };
 
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <Login
+        onLogin={handleLogin}
+      />
+    );
   }
 
   return (
@@ -79,11 +100,13 @@ function App() {
 
 function Dashboard({ user, onLogout }) {
   const [page, setPage] = useState("dashboard");
+
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const [recommendations, setRecommendations] = useState([]);
   const [learningData, setLearningData] = useState([]);
   const [competencies, setCompetencies] = useState([]);
+
   const [dashboardLoading, setDashboardLoading] = useState(true);
 
 
@@ -100,13 +123,13 @@ function Dashboard({ user, onLogout }) {
           competencyResponse,
         ] = await Promise.all([
           fetch(
-            `http://127.0.0.1:8000/recommendations/${user.user_id}`
+            `/api/recommendations/${user.user_id}`
           ),
           fetch(
-            `http://127.0.0.1:8000/my-learning?user_id=${user.user_id}`
+            `/api/my-learning?user_id=${user.user_id}`
           ),
           fetch(
-            `http://127.0.0.1:8000/competencies/${user.user_id}`
+            `/api/competencies/${user.user_id}`
           ),
         ]);
 
@@ -162,10 +185,8 @@ function Dashboard({ user, onLogout }) {
       Number(course.progress || 0) < 100
   ).length;
 
-
   const completedCourses = learningData.filter(
-    (course) =>
-      Number(course.progress || 0) >= 100
+    (course) => Number(course.progress || 0) >= 100
   ).length;
 
 
@@ -214,7 +235,7 @@ function Dashboard({ user, onLogout }) {
 
 
   /* -------------------------------------------------------
-     NAVIGATION
+     NAVIGATION HELPERS
   ------------------------------------------------------- */
 
   const navigateTo = (targetPage) => {
@@ -249,9 +270,7 @@ function Dashboard({ user, onLogout }) {
 
           <div>
             <h2>Capacity Connect</h2>
-            <span>
-              Organizational Capability Platform
-            </span>
+            <span>Organizational Capability Platform</span>
           </div>
 
         </div>
@@ -266,12 +285,14 @@ function Dashboard({ user, onLogout }) {
             onClick={() => navigateTo("dashboard")}
           />
 
+
           <NavButton
             icon={<GraduationCap size={17} />}
             label="My Learning"
             active={page === "learning"}
             onClick={() => navigateTo("learning")}
           />
+
 
           <NavButton
             icon={<BookOpen size={17} />}
@@ -283,12 +304,14 @@ function Dashboard({ user, onLogout }) {
             }}
           />
 
+
           <NavButton
             icon={<Brain size={17} />}
             label="Competencies"
             active={page === "competencies"}
             onClick={() => navigateTo("competencies")}
           />
+
 
           {user.role === "admin" && (
             <NavButton
@@ -299,6 +322,7 @@ function Dashboard({ user, onLogout }) {
             />
           )}
 
+
           <NavButton
             icon={<Library size={17} />}
             label="Knowledge Hub"
@@ -306,12 +330,14 @@ function Dashboard({ user, onLogout }) {
             onClick={() => navigateTo("knowledge")}
           />
 
+
           <NavButton
             icon={<BarChart3 size={17} />}
             label="Progress"
             active={page === "progress"}
             onClick={() => navigateTo("progress")}
           />
+
 
           <NavButton
             icon={<Sparkles size={17} />}
@@ -373,92 +399,107 @@ function Dashboard({ user, onLogout }) {
         <div
           className="dashboard-page-transition"
           key={page}
-        >
-
-          {/* DASHBOARD */}
-
-          {page === "dashboard" && (
-            <DashboardHome
-              user={user}
-              recommendations={recommendations}
-              learningData={learningData}
-              competencies={competencies}
-              skillGaps={skillGaps}
-              coursesInProgress={coursesInProgress}
-              completedCourses={completedCourses}
-              overallProgress={overallProgress}
-              averageCapability={averageCapability}
-              dashboardLoading={dashboardLoading}
-              onNavigate={navigateTo}
-              onOpenCourse={openCourse}
-            />
-          )}
+        ></div>
 
 
-          {/* COURSES */}
+        {/* =================================================
+            DASHBOARD PAGE
+        ================================================= */}
 
-          {page === "courses" && (
-            <Courses
-              user={user}
-              selectedCourseId={selectedCourseId}
-            />
-          )}
-
-
-          {/* MY LEARNING */}
-
-          {page === "learning" && (
-            <MyLearning
-              user={user}
-              onOpenCourse={(courseId) => {
-                setSelectedCourseId(courseId);
-                setPage("courses");
-              }}
-            />
-          )}
-
-
-          {/* COMPETENCIES */}
-
-          {page === "competencies" && (
-            <Competencies user={user} />
-          )}
+        {page === "dashboard" && (
+          <DashboardHome
+            user={user}
+            recommendations={recommendations}
+            learningData={learningData}
+            competencies={competencies}
+            skillGaps={skillGaps}
+            coursesInProgress={coursesInProgress}
+            completedCourses={completedCourses}
+            overallProgress={overallProgress}
+            averageCapability={averageCapability}
+            dashboardLoading={dashboardLoading}
+            onNavigate={navigateTo}
+            onOpenCourse={openCourse}
+          />
+        )}
 
 
-          {/* KNOWLEDGE HUB */}
+        {/* =================================================
+            COURSES
+        ================================================= */}
 
-          {page === "knowledge" && (
-            <KnowledgeHub user={user} />
-          )}
-
-
-          {/* PROGRESS */}
-
-          {page === "progress" && (
-            <Progress user={user} />
-          )}
+        {page === "courses" && (
+          <Courses
+            user={user}
+            selectedCourseId={selectedCourseId}
+          />
+        )}
 
 
-          {/* LEARNING PATH */}
+        {/* =================================================
+            MY LEARNING
+        ================================================= */}
 
-          {page === "learning-path" && (
-            <LearningPath
-              user={user}
-              onOpenCourse={(courseId) => {
-                setSelectedCourseId(courseId);
-                setPage("courses");
-              }}
-            />
-          )}
+        {page === "learning" && (
+          <MyLearning
+            user={user}
+            onOpenCourse={(courseId) => {
+              setSelectedCourseId(courseId);
+              setPage("courses");
+            }}
+          />
+        )}
 
 
-          {/* ADMIN */}
+        {/* =================================================
+            COMPETENCIES
+        ================================================= */}
 
-          {page === "admin" && user.role === "admin" && (
-            <Admin user={user} />
-          )}
+        {page === "competencies" && (
+          <Competencies user={user} />
+        )}
 
-        </div>
+
+        {/* =================================================
+            KNOWLEDGE HUB
+        ================================================= */}
+
+        {page === "knowledge" && (
+          <KnowledgeHub user={user} />
+        )}
+
+
+        {/* =================================================
+            PROGRESS
+        ================================================= */}
+
+        {page === "progress" && (
+          <Progress user={user} />
+        )}
+
+
+        {/* =================================================
+            LEARNING PATH
+        ================================================= */}
+
+        {page === "learning-path" && (
+          <LearningPath
+            user={user}
+            onOpenCourse={(courseId) => {
+              setSelectedCourseId(courseId);
+              setPage("courses");
+            }}
+          />
+        )}
+
+
+        {/* =================================================
+            ADMIN
+        ================================================= */}
+
+        {page === "admin" && user.role === "admin" && (
+          <Admin user={user} />
+        )}
 
       </main>
 
@@ -512,21 +553,21 @@ function DashboardHome({
   onOpenCourse,
 }) {
 
+  const [showNotifications, setShowNotifications] =
+    useState(false);
+
   return (
     <div className="dashboard-home">
 
-      {/* HEADER */}
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
       <div className="dashboard-header">
 
         <div>
           <h1>
-            {new Date().getHours() < 12
-              ? "Good morning"
-              : new Date().getHours() < 17
-                ? "Good afternoon"
-                : "Good evening"}
-            ,{" "}
+            Good evening,{" "}
             {user.name?.split(" ")[0] || "there"} 👋
           </h1>
 
@@ -541,10 +582,34 @@ function DashboardHome({
           <button
             className="dashboard-icon-button dashboard-notification"
             title="Notifications"
+            aria-label="Open notifications"
+            aria-expanded={showNotifications}
+            onClick={() =>
+              setShowNotifications(
+                (current) => !current
+              )
+            }
           >
             <Sparkles size={17} />
             <span></span>
           </button>
+
+          {showNotifications && (
+            <NotificationPanel
+              onClose={() =>
+                setShowNotifications(false)
+              }
+              onOpenProgress={() => {
+                setShowNotifications(false);
+                onNavigate("progress");
+              }}
+              onOpenLearningPath={() => {
+                setShowNotifications(false);
+                onNavigate("learning-path");
+              }}
+            />
+          )}
+
 
           <div className="dashboard-avatar">
             {user.name
@@ -557,7 +622,9 @@ function DashboardHome({
       </div>
 
 
-      {/* HERO */}
+      {/* =================================================
+          HERO
+      ================================================= */}
 
       <section className="dashboard-hero">
 
@@ -601,7 +668,7 @@ function DashboardHome({
                 onNavigate("competencies")
               }
             >
-              Assess my capabilities
+              Explore competencies
             </button>
 
           </div>
@@ -630,6 +697,7 @@ function DashboardHome({
                   ? "Growing"
                   : "Developing"}
             </strong>
+
 
             <div className="hero-mini-progress">
 
@@ -683,7 +751,9 @@ function DashboardHome({
       </section>
 
 
-      {/* KPI STATS */}
+      {/* =================================================
+          KPI STATS
+      ================================================= */}
 
       <section className="dashboard-stats">
 
@@ -694,6 +764,7 @@ function DashboardHome({
           type="blue"
         />
 
+
         <DashboardStat
           icon={<CheckCircle2 size={20} />}
           title="Completed courses"
@@ -701,12 +772,14 @@ function DashboardHome({
           type="green"
         />
 
+
         <DashboardStat
           icon={<Target size={20} />}
           title="Skill gaps"
           value={skillGaps.length}
           type="orange"
         />
+
 
         <DashboardStat
           icon={<TrendingUp size={20} />}
@@ -718,7 +791,9 @@ function DashboardHome({
       </section>
 
 
-      {/* MAIN TWO COLUMN */}
+      {/* =================================================
+          MAIN TWO COLUMN
+      ================================================= */}
 
       <div className="dashboard-two-column">
 
@@ -753,9 +828,7 @@ function DashboardHome({
 
 
           {dashboardLoading ? (
-
             <DashboardLoading />
-
           ) : learningData.length === 0 ? (
 
             <EmptyDashboard
@@ -787,7 +860,10 @@ function DashboardHome({
                   return (
                     <div
                       className="dashboard-course"
-                      key={course.id || index}
+                      key={
+                        course.id ||
+                        index
+                      }
                     >
 
                       <div className="dashboard-course-info">
@@ -855,6 +931,7 @@ function DashboardHome({
           <div className="dashboard-card-header">
 
             <div>
+
               <h2>
                 Competency snapshot
               </h2>
@@ -862,6 +939,7 @@ function DashboardHome({
               <p>
                 Your current capability levels
               </p>
+
             </div>
 
 
@@ -879,16 +957,14 @@ function DashboardHome({
 
 
           {dashboardLoading ? (
-
             <DashboardLoading />
-
           ) : competencies.length === 0 ? (
 
             <EmptyDashboard
               icon={<Brain size={23} />}
               title="No competency data yet"
               text="Complete an assessment to build your capability profile."
-              buttonText="Assess capabilities"
+              buttonText="View competencies"
               onClick={() =>
                 onNavigate("competencies")
               }
@@ -982,7 +1058,9 @@ function DashboardHome({
       </div>
 
 
-      {/* RECOMMENDATIONS */}
+      {/* =================================================
+          RECOMMENDATIONS
+      ================================================= */}
 
       <section className="dashboard-card">
 
@@ -1044,7 +1122,7 @@ function DashboardHome({
                   onNavigate("competencies")
                 }
               >
-                Assess my capabilities
+                Explore competencies
                 <ArrowRight size={13} />
               </button>
 
@@ -1057,10 +1135,22 @@ function DashboardHome({
               .map((recommendation, index) => (
 
                 <Recommendation
-                  key={`${recommendation.course_id}-${index}`}
-                  title={recommendation.course_title}
-                  category={recommendation.competency}
-                  reason={recommendation.reason}
+                  key={
+                    `${recommendation.course_id}-${index}`
+                  }
+
+                  title={
+                    recommendation.course_title
+                  }
+
+                  category={
+                    recommendation.competency
+                  }
+
+                  reason={
+                    recommendation.reason
+                  }
+
                   priority={
                     index === 0
                       ? "High priority"
@@ -1068,7 +1158,9 @@ function DashboardHome({
                         ? "Recommended"
                         : "Explore"
                   }
+
                   index={index}
+
                   onStartLearning={() =>
                     onOpenCourse(
                       recommendation.course_id
@@ -1085,7 +1177,9 @@ function DashboardHome({
       </section>
 
 
-      {/* CAPABILITY INSIGHT */}
+      {/* =================================================
+          CAPABILITY FOOTER INSIGHT
+      ================================================= */}
 
       <section className="dashboard-insight-strip">
 
@@ -1118,28 +1212,399 @@ function DashboardHome({
 
       </section>
 
+    </div>
+  );
+}
 
-      {/* FOOTER */}
 
-      <footer className="dashboard-footer">
+/* =========================================================
+   NOTIFICATION PANEL
+========================================================= */
 
-        <div>
-          <strong>
-            Capacity Connect
-          </strong>
+function NotificationPanel({
+  onClose,
+  onOpenProgress,
+  onOpenLearningPath,
+}) {
 
-          <span>
-            From training to organizational capability.
-          </span>
+  const panelStyle = {
+    position: "fixed",
+    top: "82px",
+    right: "28px",
+    width: "380px",
+    maxWidth: "calc(100vw - 32px)",
+    padding: "20px",
+    borderRadius: "24px",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(248,248,255,0.99))",
+    border:
+      "1px solid rgba(83,76,160,0.12)",
+    boxShadow:
+      "0 30px 80px rgba(26,29,55,0.22), 0 8px 28px rgba(26,29,55,0.10)",
+    backdropFilter: "blur(24px)",
+    WebkitBackdropFilter: "blur(24px)",
+    zIndex: 99999,
+    animation:
+      "capacityNotificationIn 180ms ease-out",
+  };
+
+
+  const itemBaseStyle = {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "13px",
+    width: "100%",
+    padding: "15px 8px",
+    borderRadius: "14px",
+    transition:
+      "background 160ms ease, transform 160ms ease",
+  };
+
+
+  const dotStyle = {
+    width: "10px",
+    height: "10px",
+    minWidth: "10px",
+    marginTop: "5px",
+    borderRadius: "50%",
+  };
+
+
+  return (
+    <>
+      <style>
+        {`
+          @keyframes capacityNotificationIn {
+            from {
+              opacity: 0;
+              transform: translateY(-10px) scale(0.97);
+            }
+
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          .capacity-notification-action:hover {
+            background: rgba(99,91,219,0.055) !important;
+            transform: translateX(2px);
+          }
+
+          .capacity-notification-footer:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(99,91,219,0.15);
+          }
+
+          @media (max-width: 600px) {
+            .capacity-notification-panel {
+              left: 16px !important;
+              right: 16px !important;
+              top: 72px !important;
+              width: auto !important;
+              max-width: none !important;
+            }
+          }
+        `}
+      </style>
+
+
+      <div
+        className="capacity-notification-panel"
+        role="dialog"
+        aria-label="Notifications"
+        style={panelStyle}
+      >
+
+        {/* HEADER */}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "16px",
+            paddingBottom: "16px",
+            borderBottom:
+              "1px solid rgba(35,38,62,0.08)",
+          }}
+        >
+
+          <div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+
+              <div
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  display: "grid",
+                  placeItems: "center",
+                  borderRadius: "10px",
+                  background:
+                    "linear-gradient(135deg,#eeeaff,#e5e2ff)",
+                  color: "#635bdb",
+                }}
+              >
+                <Sparkles size={15} />
+              </div>
+
+              <strong
+                style={{
+                  fontSize: "17px",
+                  fontWeight: 800,
+                  color: "#191b31",
+                }}
+              >
+                Notifications
+              </strong>
+
+            </div>
+
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "7px",
+                marginLeft: "38px",
+                fontSize: "12px",
+                color: "#85889c",
+              }}
+            >
+              Your latest capability updates
+            </span>
+
+          </div>
+
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close notifications"
+            style={{
+              width: "32px",
+              height: "32px",
+              border: "none",
+              borderRadius: "10px",
+              background: "#f2f3f8",
+              color: "#6f7288",
+              fontSize: "20px",
+              lineHeight: 1,
+              cursor: "pointer",
+              transition: "0.2s ease",
+            }}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.background =
+                "#e8e9f1";
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.background =
+                "#f2f3f8";
+            }}
+          >
+            ×
+          </button>
+
         </div>
 
-        <span>
-          Adaptive learning • Competency intelligence • Knowledge sharing
-        </span>
 
-      </footer>
+        {/* NOTIFICATION 1 */}
 
-    </div>
+        <button
+          type="button"
+          className="capacity-notification-action"
+          onClick={onOpenLearningPath}
+          style={{
+            ...itemBaseStyle,
+            marginTop: "10px",
+            border: "none",
+            background: "transparent",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+
+          <div
+            style={{
+              ...dotStyle,
+              background: "#31b978",
+              boxShadow:
+                "0 0 0 5px rgba(49,185,120,0.10)",
+            }}
+          ></div>
+
+          <div>
+
+            <strong
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 800,
+                color: "#202238",
+              }}
+            >
+              Learning path updated
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "12px",
+                lineHeight: 1.55,
+                color: "#7c7f95",
+              }}
+            >
+              Your personalized recommendations are ready.
+            </span>
+
+          </div>
+
+        </button>
+
+
+        {/* NOTIFICATION 2 */}
+
+        <button
+          type="button"
+          className="capacity-notification-action"
+          onClick={() => { }}
+          style={{
+            ...itemBaseStyle,
+            border: "none",
+            background: "transparent",
+            textAlign: "left",
+            cursor: "default",
+          }}
+        >
+
+          <div
+            style={{
+              ...dotStyle,
+              background: "#635bdb",
+              boxShadow:
+                "0 0 0 5px rgba(99,91,219,0.10)",
+            }}
+          ></div>
+
+          <div>
+
+            <strong
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 800,
+                color: "#202238",
+              }}
+            >
+              Capability insight available
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "12px",
+                lineHeight: 1.55,
+                color: "#7c7f95",
+              }}
+            >
+              Complete more assessments to improve your capability score.
+            </span>
+
+          </div>
+
+        </button>
+
+
+        {/* NOTIFICATION 3 */}
+
+        <div
+          style={{
+            ...itemBaseStyle,
+          }}
+        >
+
+          <div
+            style={{
+              ...dotStyle,
+              background: "#ef9b3b",
+              boxShadow:
+                "0 0 0 5px rgba(239,155,59,0.10)",
+            }}
+          ></div>
+
+          <div>
+
+            <strong
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 800,
+                color: "#202238",
+              }}
+            >
+              Keep building momentum
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "12px",
+                lineHeight: 1.55,
+                color: "#7c7f95",
+              }}
+            >
+              You have learning activity waiting for your attention.
+            </span>
+
+          </div>
+
+        </div>
+
+
+        {/* FOOTER */}
+
+        <button
+          type="button"
+          className="capacity-notification-footer"
+          onClick={onOpenProgress}
+          style={{
+            width: "100%",
+            marginTop: "8px",
+            padding: "12px 15px",
+            border: "none",
+            borderRadius: "13px",
+            background:
+              "linear-gradient(135deg,#f0efff,#e8e5ff)",
+            color: "#635bdb",
+            fontSize: "12px",
+            fontWeight: 800,
+            cursor: "pointer",
+            transition:
+              "transform 160ms ease, box-shadow 160ms ease",
+          }}
+        >
+          View learning activity
+          <span
+            style={{
+              marginLeft: "6px",
+              fontSize: "14px",
+            }}
+          >
+            →
+          </span>
+        </button>
+
+      </div>
+    </>
   );
 }
 
@@ -1154,10 +1619,19 @@ function DashboardStat({
   value,
   type,
 }) {
+
+  const displayValue =
+    typeof value === "string" &&
+      value.endsWith("%")
+      ? value
+      : value;
+
   return (
     <div className="dashboard-stat-card">
 
-      <div className={`dashboard-stat-icon ${type}`}>
+      <div
+        className={`dashboard-stat-icon ${type}`}
+      >
         {icon}
       </div>
 
@@ -1168,7 +1642,7 @@ function DashboardStat({
         </span>
 
         <strong className="stat-number">
-          {value}
+          {displayValue}
         </strong>
 
       </div>
@@ -1190,11 +1664,13 @@ function Recommendation({
   index,
   onStartLearning,
 }) {
+
   return (
     <div
       className="recommendation-card"
       style={{
-        animationDelay: `${index * 120}ms`,
+        animationDelay:
+          `${index * 120}ms`,
       }}
     >
 
@@ -1227,16 +1703,21 @@ function Recommendation({
 
 
         <p className="recommendation-reason">
+
           {reason ||
             "Selected to support your current capability development."}
+
         </p>
 
 
         <div className="recommendation-insight">
 
           <span>
+
             <span className="insight-dot"></span>
+
             Matched to your capability gap
+
           </span>
 
           <strong>
@@ -1250,8 +1731,11 @@ function Recommendation({
           className="recommendation-button"
           onClick={onStartLearning}
         >
+
           Start learning
+
           <ArrowRight size={14} />
+
         </button>
 
       </div>
@@ -1272,6 +1756,7 @@ function EmptyDashboard({
   buttonText,
   onClick,
 }) {
+
   return (
     <div className="dashboard-empty-state">
 
@@ -1291,8 +1776,11 @@ function EmptyDashboard({
         className="dashboard-outline-button"
         onClick={onClick}
       >
+
         {buttonText}
+
         <ArrowRight size={13} />
+
       </button>
 
     </div>
@@ -1305,6 +1793,7 @@ function EmptyDashboard({
 ========================================================= */
 
 function DashboardLoading() {
+
   return (
     <div className="dashboard-loading-state">
 
